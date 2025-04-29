@@ -38,7 +38,7 @@ library(rmdformats) # provides ready-to-use HTML output formats and templates fo
 ```
 
 For the supporting code and data:
-<https://github.com/LCroninATU/Workflow-for-identifying-potential-water-quality-events-using-time-series-data>
+<https://github.com/LCroninATU/Workflow-for-identifying-water-quality-hydrodynamic-events-in-time-series-data>
 
 Please contact me with questions by email [Lisa
 Cronin](lisa.cronin@atu.ie). For more information on projects being
