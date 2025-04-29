@@ -1,0 +1,193 @@
+- Startup Timestamp: 20250316T142627
+- initialize location: 	OW061024_051124C_BED_10_ET0.98926
+
+- Batch Processing
+
+- Processing start timestamp: 20250316T142630
+- batch start date time: 06/10/2024 13:45:00
+  batch stop date time: 05/11/2024 11:45:00
+- update from source: OW061024_051124C_NoOutRange.csv
+  update duration:  20250316T142630 --> 20250316T142631
+- message:
+    timestamp:20250316T142632
+    from:     EDS
+    subject:  Time to process day: 68.1 sec; est. remain: 32.8 min
+    content:  07/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142633
+    from:     EDS
+    subject:  Time to process day: 1.3 sec; est. remain: 16.2 min
+    content:  08/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142635
+    from:     EDS
+    subject:  Time to process day: 1.7 sec; est. remain: 10.6 min
+    content:  09/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142637
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 7.9 min
+    content:  10/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142639
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 6.2 min
+    content:  11/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142641
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 5.1 min
+    content:  12/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142643
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 4.3 min
+    content:  13/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142645
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 3.7 min
+    content:  14/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142647
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 3.2 min
+    content:  15/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142649
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 2.8 min
+    content:  16/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142651
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 2.5 min
+    content:  17/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142653
+    from:     EDS
+    subject:  Time to process day: 2.0 sec; est. remain: 2.2 min
+    content:  18/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142655
+    from:     EDS
+    subject:  Time to process day: 2.1 sec; est. remain: 2.0 min
+    content:  19/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142657
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 1.7 min
+    content:  20/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142659
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 1.6 min
+    content:  21/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142700
+    from:     EDS
+    subject:  Time to process day: 1.3 sec; est. remain: 1.4 min
+    content:  22/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142702
+    from:     EDS
+    subject:  Time to process day: 1.8 sec; est. remain: 1.2 min
+    content:  23/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142704
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 1.1 min
+    content:  24/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142706
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 1.0 min
+    content:  25/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142708
+    from:     EDS
+    subject:  Time to process day: 2.0 sec; est. remain: 0.9 min
+    content:  26/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142710
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 0.7 min
+    content:  27/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142712
+    from:     EDS
+    subject:  Time to process day: 2.0 sec; est. remain: 0.6 min
+    content:  28/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142714
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 0.5 min
+    content:  29/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142716
+    from:     EDS
+    subject:  Time to process day: 1.9 sec; est. remain: 0.5 min
+    content:  30/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142718
+    from:     EDS
+    subject:  Time to process day: 2.0 sec; est. remain: 0.4 min
+    content:  31/10/2024 13:30:00
+
+- message:
+    timestamp:20250316T142720
+    from:     EDS
+    subject:  Time to process day: 2.1 sec; est. remain: 0.3 min
+    content:  01/11/2024 13:30:00
+
+- message:
+    timestamp:20250316T142722
+    from:     EDS
+    subject:  Time to process day: 2.5 sec; est. remain: 0.2 min
+    content:  02/11/2024 13:30:00
+
+- message:
+    timestamp:20250316T142725
+    from:     EDS
+    subject:  Time to process day: 2.1 sec; est. remain: 0.1 min
+    content:  03/11/2024 13:30:00
+
+- message:
+    timestamp:20250316T142727
+    from:     EDS
+    subject:  Time to process day: 2.0 sec; est. remain: 0.1 min
+    content:  04/11/2024 13:30:00
+
+- message:
+    timestamp:20250316T142729
+    from:     EDS
+    subject:  Time to process day: 2.0 sec; est. remain: 0.0 min
+    content:  05/11/2024 11:45:00
+
+- Processing complete timestamp: 20250316T142730
+
+- Shutdown timestamp: 20250316T142730

@@ -1,0 +1,1098 @@
+---
+title: "Timeseries Water Quality data processing with R and CANARY for Hydrodynamic Event Monitoring"
+author: "Lisa Cronin, Cian Taylor"
+date: "2025-03-01"
+output: 
+    rmdformats::downcute:
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    code_folding: show
+    highlight: tango
+    downcute_theme: chaos
+    toc: true
+bibliography: References.bib
+link-citations: true
+csl: harvard-cite-them-right
+reference-section-title: References
+nocite: '@*'
+indent: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+
+```{r setup, include=FALSE}
+
+# Override View() function when knitting (needed as View can't  #be used within docker environment, when knitting)
+if (isTRUE(getOption('knitr.in.progress'))) {
+  View <- function(x) { print(head(x)) }
+}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r, echo=FALSE,results='hide', warning=FALSE, message=FALSE}
+library(rmdformats) # provides ready-to-use HTML output formats and templates for RMarkdown documents
+```
+
+For the supporting code and data:
+<https://github.com/LCroninATU/Workflow-for-identifying-potential-water-quality-events-using-time-series-data>
+
+Please contact me with questions by email [Lisa
+Cronin](lisa.cronin@atu.ie). For more information on projects being
+carried out at [DCU Water Institute](https://dcuwater.ie/) led by [Prof.
+Fiona Regan](https://dcuwater.ie/people/prof-fiona-regan/)
+
+Acknowledgements
+The authors thank Jonathan Burkhardt, Ph.D.,  Office of Research & Development, U.S. EPA for providing further information on the matching of manually identified events to CANARY events which enabled the development and refinement of the method presented in this article
+
+```{r, out.width='20%', fig.align= 'left', echo = FALSE}
+
+knitr::include_graphics('DCU_logo.png')
+```
+
+------------------------------------------------------------------------
+# R Studio Projects
+R Studio uses projects to store all the data, R
+scripts, output files including figures, tables etc associated with each
+individual project in one place.\
+There is a project file associated with this project called 'Project Workflow
+for detecting Hydrodynamic Water Quality Events'.  You
+must double click on this file to open this project *prior* to running the
+code.  Otherwise the code may not run correctly.
+
+# 1.0 Import Water Quality Data
+
+One of the first steps in processing data is importing the data into R.
+
+## 1.1 Load the packages
+
+You may need to install some of the packages before loading them. Go to
+the output pane on the bottom right of the screen, go to packages,
+install, enter the name of the package under packages and click install. You may be asked to enter 'Y' in the console to confirm the installation.
+
+```{r, message=FALSE, warning=FALSE}
+### for working with tabular data
+library(data.table)
+### for data wrangling
+library(dplyr)
+### for working with dates & times
+library(lubridate)
+### for labelling of variables
+library(labelled)
+### breaks and labels for axes and legends on graphs
+library(scales)
+### for data visualisation
+library(ggplot2)
+### tidy ways to summarise, visualise, and manipulate missing data
+library(naniar)
+### for creating interactive web-based graphs
+library(plotly)
+### for combining multiple plots into a single figure
+library(cowplot)
+### for arranging graphical elements
+library(grid)
+### to arrange multiple grid-based plots
+library(gridExtra)
+### for publication quality tables
+library(stargazer)
+### to make working with strings as easy as possible
+library(stringr)
+### tool to tidu up messy datasets
+library(tidyr)
+### to import, organize, manipulate, and visualise data
+library(tidyverse)
+```
+
+## 1.2 The working Directory
+This is the location on your pc which r will use for reading and writing files. 
+R operates a working directory where it looks for files that you want to load and where it saves files you request R to save. This working directory is displayed at the top of the console window. 
+The 'here' package sets the top level of the project folder.  It's very important to open the project file as described previously **before** trying to run any code to avoid problems with files and the working directory.
+
+```{r, message=FALSE, warning=FALSE}
+library(here)  # for file referencing
+```
+
+## 1.2 Set the timezone (no daylight saving)
+
+```{r}
+Sys.setenv(TZ='UTC')
+Sys.timezone()
+```
+
+## 1.3 Import the data file
+
+There are two options in this workflow to import the data files, either
+as individual files or loading multiple files together. Two csv files
+have been provided as an example, OW061024 and OW221024. OW refers to
+the name of the river where the sonde was deployed, in this case the
+Owenmore River, Sligo, and 061024 is the date the sonde was deployed in
+the river.
+
+### Option 1: Import a single .csv data file and specify the variables to be loaded
+In this case 'Date', 'Time', 'Temp', 'SpCond' and 'Turbid+'. 
+Watch out for spaces in column names in some .txt files when specifying the variable name, it must match exactly.
+**Note: For these files, only data for temperature, specific conductivity and turbidity are valid as only these sensors were calibrated.**
+```{r}
+OW061024<-fread("01_ImportYSI_Data/Data/OW061024.txt",skip=1, header=T,select = c("      Date", "    Time"," Temp","SpCond","Turbid+"))[-1:-2] 
+OW221024<-fread("01_ImportYSI_Data/Data/OW221024.txt",skip=1, header=T,select = c("      Date", "    Time"," Temp","SpCond","Turbid+"))[-1:-2]
+```
+
+Display the structure and properties of the imported file.
+```{r}
+# Display the structure of the imported file
+str(OW061024)
+str(OW221024)
+# Display the class or the properties of the imported file, this affects how the imported file interacts with the R code
+class(OW061024)
+class(OW221024)
+```
+
+### Option 2: Import Multiple Files into R & bind them together.
+Alternative option for importing files is to import the entire file and subset for the variables of interest.
+**Note: For these files, only data for temperature, specific conductivity and turbidity are valid as only these sensors were calibrated.**
+```{r}
+# Import the data file
+OW061024<-fread("01_ImportYSI_Data/Data/OW061024.txt",skip=1, header=T,)[-1:-2] 
+OW221024<-fread("01_ImportYSI_Data/Data/OW221024.txt",skip=1, header=T)[-1:-2]
+str(OW061024)
+str(OW221024)
+class(OW061024)
+class(OW221024)
+```
+
+Display the column names, this provides the exact column name (including any spaces!) when choosing columns of interest and then drop any unwanted variables by entering NULL against these.
+```{r}
+# Display the column names
+colnames(OW061024)
+colnames(OW221024)
+# Subset for the variables of interest in OW061024 by dropping each column not required.
+OW061024$` Cond`<-NULL
+OW061024$`  TDS`<-NULL
+OW061024$`   Sal`<-NULL
+OW061024$`  Press`<-NULL
+OW061024$`  Depth`<-NULL
+OW061024$`   pH`<-NULL
+OW061024$`     pH`<-NULL
+OW061024$`  Chl`<-NULL
+OW061024$"  Chl"<-NULL
+OW061024$Battery<-NULL
+
+# Subset for the variables of interest in OW221024 by dropping each column not required.
+OW221024$` Cond`<-NULL
+OW221024$`  TDS`<-NULL
+OW221024$`   Sal`<-NULL
+OW221024$`  Press`<-NULL
+OW221024$`  Depth`<-NULL
+OW221024$`   pH`<-NULL
+OW221024$`     pH`<-NULL
+OW221024$`  Chl`<-NULL
+OW221024$"  Chl"<-NULL
+OW221024$Battery<-NULL
+
+# View the dataframe to see what variables have been retained (Note there is a number of spaces in the Date, Time and Temp column names). 
+str(OW061024)
+str(OW221024)
+
+```
+
+## 1.4 Tidy the data and format the imported water quality data
+
+```{r}
+#Combine date and time columns to form DateTime & change from chr to as.POSIXct (as.POSIXct stores both a date and time with an associated time zone)
+OW061024$DateTime<-with(OW061024, dmy(OW061024$`      Date`) + hms(OW061024$`    Time`) )
+OW221024$DateTime<-with(OW221024, dmy(OW221024$`      Date`) + hms(OW221024$`    Time`) )
+str(OW061024)
+str(OW221024)
+
+# Rename the column names
+OW061024<-setnames(OW061024, "Turbid+", "Turbidity")
+OW061024<-setnames(OW061024," Temp", "Temp")        # this removes the space in front of Temp
+OW221024<-setnames(OW221024, "Turbid+", "Turbidity")
+OW221024<-setnames(OW221024," Temp", "Temp")
+colnames(OW061024)
+colnames(OW221024)
+
+# Change variable format from chr to numeric
+str(OW061024)
+str(OW221024)
+OW061024$SpCond<-as.numeric((OW061024$SpCond))
+OW061024$`Temp`<-as.numeric((OW061024$Temp))
+OW061024$Turbidity<-as.numeric((OW061024$Turbidity))
+
+OW221024$SpCond<-as.numeric((OW221024$SpCond))
+OW221024$`Temp`<-as.numeric((OW221024$Temp))
+OW221024$Turbidity<-as.numeric((OW221024$Turbidity))
+
+# Change variable format from chr to numeric
+# View the structure after the format changes
+str(OW061024)
+str(OW221024)
+```
+
+Review imported file and if required, remove out-of-the-water-edits i.e. data before sensor was deployed in the river if sensor is running before being deployed, and data after sensor is removed from the river.  Often the sensor will be put into operation to check everything is logging before being deployed in the water. 
+```{r}
+# When importing multiple files together you will need to do this for each file imported 
+OW061024 <- OW061024 %>% filter(DateTime > ymd_hms('2024-10-06 13:40:00'))
+# and after removed from river
+OW061024 <- OW061024 %>% filter(DateTime < ymd_hms('2024-10-21 17:20:00'))
+
+OW221024 <- OW221024 %>% filter(DateTime > ymd_hms('2024-10-22 17:45:50'))
+# and after removed from river
+OW221024 <- OW221024 %>% filter(DateTime < ymd_hms('2024-11-05 11:46:50'))
+
+# and similarly if the sensor was checked in situ during deployment
+```
+
+## 1.5 Combine the files into a single dataframe
+To process the data as one file for visualization and event detection, the files need to be joined together.
+```{r}
+# Bind OW061024 and OW221024 to form new object OWCombined
+OWCombined<- bind_rows(OW061024,OW221024)
+
+```
+# 2.0 Data Integrity
+
+## 2.1 Embed source data context for data integrity by adding variable labels.
+To ensure the integrity of the data persists once imported into R, it is
+very useful to embed the source data context in the datafile.  Embed the
+source data context by adding variable labels to the sensor data. 
+In this case the site name and sensor details are embedded.
+
+```{r}
+OWCombined<-OWCombined|>
+  labelled::set_variable_labels(
+    DateTime = "Measurement Date and Time of River Owenmore, Sligo ",
+    Temp = "Temperature (degC) YSI6600EDSV2_2 6560 Conductivity_Temp. Probe",
+    SpCond = "Specific Conductance uScm-1 YSI6600EDSV2-2 6560 Conductivity_Temp. Probe",
+    Turbidity = "Turbidity (NTU) - YSI_6600_EDS_V2-2 - 6136 Turbidity Probe"
+  )
+
+# To view the variable labels
+# A new tab opens displaying the combined dataframe.
+View(OWCombined)   
+```
+
+## 2.2 Export the tidyied datafile as a .csv file and as .rds file to working directory
+Note the datalabels are lost whenexporting the files as .csv but are maintained when exported as .rds file.
+This file is used for visualisation and event detection. 
+```{r}
+# Export the cleaned datafile as .csv to the working directory #
+write.table(OWCombined,"./02_Embed_Source_Data_Context/Output_Files/OW061024_051124C.csv",row.names=F, sep = ",")
+
+# save the file as RData (useful if importing into R again)
+saveRDS(OWCombined, file = "./02_Embed_Source_Data_Context/Output_Files/OW061024_051124C.rds")
+
+```
+
+# 3.0 Visualisation of Water Quality Data
+
+## 3.1 Load the cleaned datasets into R studio
+
+Load the YSI Sonde Dataset for the River Owenmore at Ballynacarrow
+```{r}
+OW061024_051124C<-readRDS('./02_Embed_Source_Data_Context/Output_Files/OW061024_051124C.rds')     
+str(OW061024_051124C)
+```
+
+## 3.2 Visualise the Data using ggplot2 and ggplotly
+
+Data is visualised which aids in understanding the data.  There are two type of plots created:
+1. Static plots which appear as an image can be viewed in the Plots tab and 
+2. Interactive plots where can be viewed in the viewer tab. With interactive plots, you can hover over specific data points and the value will be displayed, you can zoom in on an area of a plot by click and drag with the mouse, and zoom out completely by double clicking.  Video resources are available online for ggplotly if you want to learn more. 
+
+### 3.2.1 Plot the Turbidity data 
+```{r}
+ggplot(OW061024_051124C,aes(DateTime, Turbidity))+
+  geom_point(size=0.5)+
+  xlab("Date")+
+  ylab("Turbidity (NTU)")+
+  scale_x_datetime(
+    labels = date_format("%d %b %Y"),
+  breaks = date_breaks("2 days"))+
+  theme(axis.text.x = element_text(angle = 20))
+ 
+## Name the object Turbidity Plot for specific Data file
+OW061024_051124C_Turbidity_Plot<-ggplot(OW061024_051124C,aes(DateTime, Turbidity))+
+  geom_point(size=0.5)+
+  xlab("Date")+
+  ylab("Turbidity (NTU)")+
+  scale_x_datetime(
+    labels = date_format("%d %b %Y"),
+  breaks = date_breaks("2 days"))+
+  theme(axis.text.x = element_text(angle = 20))
+```
+
+#### Plot an interactive turbidity plot using plotly. 
+```{r}
+IntTurbidity_Plot<-ggplotly(OW061024_051124C_Turbidity_Plot)
+IntTurbidity_Plot
+```
+
+### 3.2.2 Plot the Specific Conductance data
+```{r}
+ggplot(OW061024_051124C,aes(DateTime, SpCond))+geom_point(size=0.5)+
+  xlab("Date")+ylab("SpConductivity (uS/cm)")+
+  scale_x_datetime(labels = date_format("%d %b %Y"))+
+  theme(axis.text.x = element_text(angle = 20))
+
+# Name the object SpCond for specific data file
+OW061024_051124C_SpCond_Plot<-ggplot(OW061024_051124C,aes(DateTime, SpCond))+geom_point(size=0.5)+
+  xlab("Date")+ylab("SpCond. (uS/cm)")+
+  scale_x_datetime(labels = date_format("%d %b %Y"))+
+  theme(axis.text.x = element_text(angle = 20))
+OW061024_051124C_SpCond_Plot
+```
+
+#### Interactive plot for specific conductance using plotly
+```{r}
+IntSpCond_Plot<-ggplotly(OW061024_051124C_SpCond_Plot)
+IntSpCond_Plot
+```
+
+### 3.2.3 Plot the Temperature Data
+```{r}
+OW061024_051124C_Temp_Plot<-ggplot(OW061024_051124C, aes(DateTime,Temp)) + geom_point(size=0.5)+
+  xlab("Date") + ylab(bquote(Temp. ("\u00B0C")))+
+  scale_x_datetime(labels = date_format("%d %b %Y"))+
+  theme(axis.text.x = element_text(angle = 20))+
+  ylim(0, 20)
+OW061024_051124C_Temp_Plot
+```
+
+#### Plot the interactive temperature plot using plotly (plotly won't plot with customised symbols used for units, in this case the text 'degrees celsius' is used for the y axis label) )
+```{r}
+OW061024_051124C_Temp_PlotV1<-ggplot(OW061024_051124C, aes(DateTime,Temp)) + geom_point(size=0.5)+
+  xlab("Date") + ylab("Temp. deg.C")+
+  scale_x_datetime(labels = date_format("%d %b %Y"))+
+  theme(axis.text.x = element_text(angle = 20))+
+  ylim(0, 20)
+OW061024_051124C_Temp_PlotV1
+
+IntTemp_Plot<-ggplotly(OW061024_051124C_Temp_PlotV1)
+IntTemp_Plot
+```
+
+### 3.2.4 Plot the water quality data together in one plot
+You can zoom in on a plot using zoom in the Plots tab.
+Arrange all plots in one column and align by x-axis
+```{r}
+Comb_OW061024_051124C<-plot_grid(OW061024_051124C_Turbidity_Plot, 
+                                     OW061024_051124C_Temp_Plot, OW061024_051124C_SpCond_Plot, ncol=1, align = "v")
+
+Comb_OW061024_051124C
+
+
+
+# To include a title on the plot 
+Comb_OW061024_051124CV1<-grid.arrange(OW061024_051124C_Turbidity_Plot, 
+                                 OW061024_051124C_Temp_Plot, OW061024_051124C_SpCond_Plot, ncol=1, bottom=textGrob("Figure 1: River Owenmore at Ballynacarrow", gp=gpar(fontsize=14, font=3) ))
+```
+
+### 3.3 Save the Combined Plots
+```{r}
+ggsave(here("./03_Data_Visualisation_of_TimeSeries_Data/Output_Files", "Comb_OW061024_051124C_Plot.jpg"), Comb_OW061024_051124C)
+```
+
+# 4.0 Summary Statistics
+
+## 4.1 Check for any missing values as it interferes with computing summary statistics and further analysis.
+```{r}
+colSums(is.na(OW061024_051124C))
+
+# Find and count any missing values
+# number of missing values
+which(is.na(OW061024_051124C$Turbidity))
+which(is.na(OW061024_051124C$SpCond))
+which(is.na(OW061024_051124C$Temp))
+
+# location of missing values (if any)
+print("Position of missing values ")
+which(is.na(OW061024_051124C))
+```
+
+## 4.2 Screen for datapoints outside the measurement range of the sensors. The measurement range varies from sensor to sensor so it's important to refer to the measurement range for the particular sensors used.
+
+### Specific Conductance
+
+```{r}
+# Identify where SpCond <0 uS/cm
+OW061024_051124C_SpCond_lo<-OW061024_051124C$SpCond<0 
+#count the number of TRUE, FALSE, and NA values in vector turbidity <0.  If count of all observations is FALSE then there is no values of SpCond<0.
+summary(OW061024_051124C_SpCond_lo)
+
+# Identify where SpCond>100,000 uS/cm
+OW061024_051124C_SpCond_hi<-OW061024_051124C$SpCond>100000
+#count TRUE, FALSE, and NA values in vector turbidity >1000
+summary(OW061024_051124C_SpCond_hi)
+```
+
+#### Export SpCond_OutRange Values to pdf file  
+```{r}
+pdf("04 Summary Statistics in R & Remove Outrange data/Output_Files/OW061024_051124C_SpCond_OutRange.pdf")
+summary(OW061024_051124C_SpCond_lo)
+summary(OW061024_051124C_SpCond_hi)
+dev.off
+# in this case there are no values outside the measurement range so the pdf file is empty.
+```
+
+### Turbidity - YSI 6136 Turbidity Sensor Range 0 to 1000 NTU
+```{r}
+# Identify where turbidity <0 NTU
+identify_rows_turbidity_lo<-OW061024_051124C$Turbidity<0 
+#count TRUE, FALSE, and NA values in vector turbidity <0
+summary(identify_rows_turbidity_lo)
+
+# Identify where turbidity >1000NTU
+identify_rows_turbidity_hi<-OW061024_051124C$Turbidity>1000
+#count TRUE, FALSE, and NA values in vector turbidity >1000
+summary(identify_rows_turbidity_hi)
+# If turbidity in the file is >1000NTU create a subset dataframe with these values.
+subset(OW061024_051124C, Turbidity>1000 )
+```
+
+## 4.3 Replace All Data Points outside the Measuring Range of Sensor with NA and create new dataframe
+
+### Replace all turbidity values greater than sensor measuring range (>1000 NTU) with NA
+```{r}
+OW061024_051124C_NoOutRange<- replace_with_na_at(OW061024_051124C, "Turbidity", ~ .x > 1000)
+```
+
+### Replace all turbidity values less than the measuring range (<0 NTU) with NA
+```{r}
+OW061024_051124C_NoOutRange<- replace_with_na_at(OW061024_051124C_NoOutRange, "Turbidity", ~ .x < 0)
+```
+
+### Check datapoints have been replaced (both greater than and less than the measuring range)
+```{r}
+identify_rows_turbidity_hi<-OW061024_051124C_NoOutRange$Turbidity>1000
+summary(identify_rows_turbidity_hi)
+identify_rows_turbidity_lo<-OW061024_051124C_NoOutRange$Turbidity<0 
+summary(identify_rows_turbidity_lo)
+```
+
+### Save the edited dataframe to the working directory as .csv file
+```{r}
+here::here()
+write.csv(OW061024_051124C_NoOutRange, "04 Summary Statistics in R & Remove Outrange data/Output_Files/OW061024_051124C_NoOutRange.csv", row.names = FALSE)
+```
+
+## 4.4 Summary Statistics
+
+### Produce a summary statistics table
+```{r}
+df1<-as.data.frame(OW061024_051124C_NoOutRange)
+data_summary<-stargazer(df1, type="text", title="River Owenmore, Sligo  06/10/24 to 05/11/24 (non-continuous) ", digits = 1, 
+                        covariate.labels = c("Temperature (deg.C)", "Specific Conductance (uS/cm)", "Turbidity (NTU)"),
+                        summary.stat=c("n","mean", "sd","min", "median","max"),
+                        style="ajps",
+                        out="04 Summary Statistics in R & Remove Outrange data/Output_Files/SummaryStats_OW061024_051124C.txt")
+```
+
+### Count the number of days when monitoring was carried out ##
+```{r}
+n_distinct(OW061024_051124C_NoOutRange$`      Date`)
+CountDays<-n_distinct(OW061024_051124C_NoOutRange$`      Date`)
+CountDays
+```
+
+### Count no. of observations
+```{r}
+NumberRowsOW061024_051124C<-nrow(OW061024_051124C_NoOutRange)
+NumberRowsOW061024_051124C
+```
+
+### Record number of days and number of observations to an output file 
+```{r}
+sink("04 Summary Statistics in R & Remove Outrange data/Output_Files/OW061024_051124C_countDays+Observations.txt", append = T)
+CountDays
+NumberRowsOW061024_051124C
+sink()
+```
+
+# 5.0 Define significant change thresholds for turbidity and highlight on plots to identify events
+
+## 5.1 Identification of Significant Change Thresholds for Turbidity
+
+#### The turbidity timeseries data needs to be visually inspected to identify potential water quality events where there is a significant change in the turbidity from the baseline. To facilitate the visual identification (using ggplot2) of events from significant increases in water turbidity, a turbidity threshold value is calculated for water quality at the site. Sections of the plot greather than this turbidity threshold are highlighted and the data from this plot exported to a csv file. This csv file is used by the analyst to record the manually verified eventsand subsequenly comared to the potential water quality events identified by the CANARY software.
+
+## 5.2 Visualise the data
+Plot the turbidity data and remove NA values (Not Available data or missing values) as these affect how the code runs.
+```{r}
+OW061024_051124C_Turbidity_Plot <- ggplot(OW061024_051124C_NoOutRange, aes(x = DateTime, y = Turbidity)) +
+  geom_point(na.rm = TRUE)+
+  scale_x_datetime(date_breaks = "1 week")+
+  labs(x = "Time", y = "Turbidity (NTU)") +
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+OW061024_051124C_Turbidity_Plot
+```
+
+Save the plot to the working directory.
+```{r}
+## Save the OW061024_051124C_NoOutRange_Turbidity_Plot to a pdf document
+pdf("05 SCT and highlight areas on plot for events/Output_Files/OW061024_051124C_Turbidity_Plot.pdf")
+print(OW061024_051124C_Turbidity_Plot)
+dev.off()
+```
+
+### Plot an interactive turbidity plot.
+Can be used to zoom in on areas of interest using the zoom function above the plot when examining potential water quality events.
+```{r}
+OW061024_051124C_IntTurbPlot<- ggplotly(OW061024_051124C_Turbidity_Plot)
+OW061024_051124C_NoOutRange
+```
+
+## 5.3 Significant Change Threshold & Highlight potential water quality events on turbidity plots
+
+This may be helpful for those unfamiliar with viewing time series plots.
+A statistical test, Tukey Fences test for outliers is used to identify
+potential turbidity outliers in the data, especically those high
+turbidity values occuring at the upper range of the data as these can
+indicate possible water quality events.
+The identified outliers will be highlighted in red on the plot and an interactive plot of
+turbidity values is plotted. This allows the analyst to manually verify possible
+turbidity events which can be used for the initial CANARY configuration (training).
+
+### 5.3.1 Tukey Fences test for outliers
+
+Compute Inter Quartile Range (IQR) of the turbidity data.  These values are displayed under 'Values' in the environment.
+```{r}
+quantile(OW061024_051124C_NoOutRange$Turbidity, 0.25, na.rm=TRUE)
+Q1<-quantile(OW061024_051124C_NoOutRange$Turbidity, 0.25, na.rm=TRUE)
+
+quantile(OW061024_051124C_NoOutRange$Turbidity, 0.75, na.rm=TRUE)
+Q3<- quantile(OW061024_051124C_NoOutRange$Turbidity, 0.75, na.rm=TRUE)
+
+IQR<-Q3-Q1
+print(IQR)
+multiplier <- 1.5
+```
+##### The upper bound and lower bound are the values of interest in terms of turbidity outliers
+Calculate the Lower bound turbidity value
+```{r}
+Q1-(IQR * multiplier) 
+lower_bound<-Q1-(IQR * multiplier)
+```
+
+Calculate the upper bound turbidity value
+```{r}
+Q3 + (IQR*multiplier) 
+upper_bound<-Q3 + (IQR*multiplier) 
+```
+
+### 5.3.2 Identify where the turbidity is likely to be an outlier.
+An outlier is >/= upper bound in Tukey Fences.  Create a new variable (column) called 'Alarm Classify' where values are categorised as 1 (True) i.e. \>/= upper bound or 0 (False) i.e. \</= upper bound.
+
+#### Identify where Turbidity \>/= upper bound (Turbidity Threshold Value) and in a new variable (column) called Event Alarm, classify as 1 (true) or 0 (false)
+```{r}
+OW061024_051124C_TurbEvent<-OW061024_051124C_NoOutRange %>% mutate(Possible_Owenmore_Event_Alarm = if_else(
+  Turbidity > upper_bound, true = 1, false = 0))
+
+head(OW061024_051124C_TurbEvent, 10)
+str(OW061024_051124C_TurbEvent)
+```
+
+### 5.3.3 Count the number of observations where the turbidity \>/= upper bound and express as a percentage of the total number of turbidity values in the data frame.
+
+Count the number of True (1) values i.e. where turbidity >/= upper bound
+```{r}
+print(Number_True_values<-length(which(OW061024_051124C_TurbEvent $Possible_Owenmore_Event_Alarm==1)))
+```
+Count the number of observations (i.e. number of values for each parameter in the data frame.  This is also the number of rows in the dataframe.)
+```{r}
+print(Number_observations<-nrow(OW061024_051124C_NoOutRange))
+```
+
+Calculate the percentage of values in dataframe where turbidity >/= upper bound
+```{r}
+print(Percentage_turb_upperbound<-(Number_True_values/Number_observations)*100)
+```
+
+### 5.3.4 Export as .csv file the observations where Turbidity \>/= upper bound.  This file contains the observations suspected of being a possible turbidity water quality event.
+
+Export OW061024_051124C_NoOutRange_TurbEvent as a .csv file
+```{r}
+OW061024_051124C_TurbEvent$DateTime<-format(OW061024_051124C_TurbEvent$DateTime) # this prevents 00:00:00 being removed from Timestamps
+write.csv(OW061024_051124C_TurbEvent, "05 SCT and highlight areas on plot for events/Output_Files/OW061024_051124C_NoOutRange_TurbEvent.csv", row.names=FALSE)
+```
+
+### 5.3.5 Highlight significant change turbidity thresholds in red on plots
+
+ 
+
+#### The code for this section is edited for this dataframe [@Edward_Threshold_Stackoverflow_2024]
+
+#### To help with visualising the turbidity values \>/= upper bound (\>/= Turbidity Threshold) on a plot, these values are highlighted on the plot as red lines.
+```{r}
+Owenmore_Turbidity_Threshold_Plot<- ggplot(OW061024_051124C_NoOutRange, aes(x = DateTime, y = Turbidity)) +
+  geom_point(na.rm = TRUE)+
+  geom_rect(data = subset(OW061024_051124C_NoOutRange, Turbidity >=upper_bound),
+            aes(xmin = DateTime-450, xmax = DateTime+450, ymin = -Inf, ymax = Inf),
+            fill = "red", alpha = 0.3) +
+  labs(x = "Time", y = "Turbidity (NTU)") +
+  theme_minimal()
+Owenmore_Turbidity_Threshold_Plot
+```
+
+### 5.3.6 Interactive plot with highlighted areas on plot where turbidity is greater than the turbidity threshold value.
+
+Interactive plots are very useful for interrogating data and this interactive plot may aid in the identification of probable turbidity events for users unfamiliar with time series datasets.
+Users can zoom in and out of the plots. Use magnifying glass icon to open the plot full screen and click and drag the mouse to zoom in on an area, double click to zoom back out.
+
+#### The code for this section is edited for this dataframe [@Kat_Interactive_Highlight_Stackoverflow_2024].
+
+Plot an interactive plot for turbidity with turbidity values \>/= upper bound (\>/= Turbidity Threshold) highlighted on the plot as red lines.
+```{r}
+fixer <- function(plt) {  
+  plt <- plotly_build(plt)              # make sure entire plot built
+  lapply(1:length(plt$x$data), \(k) {   # go through each trace (layer) 
+    plt$x$data[[k]]$x <<- as.POSIXct(plt$x$data[[k]]$x) # update x-axis data type
+  })
+  plt
+}
+tSpan <- function(gplt) {  # gplt: ggplot graph to be made into a ggplotly 
+  #  - assuming one x-axis within gplt
+  #  - assuming geom_rect called 2nd in gplt
+  
+  # 2 here, because geom_rect was called 2nd            --- get data from plot
+  dta <- data.frame(ggplot_build(gplt)$data[[2]][c("xmin", "xmax", "fill", "alpha")]) %>% 
+    mutate(xmin = as.POSIXct(xmin), xmax = as.POSIXct(xmax))
+  
+  shps <- map(1:nrow(dta), \(k) {    # create data used in geom_rect
+    list(type = "rect", xref = "x", yref = "paper",  # define shape, use x axis, not y axis
+         x0 = dta$xmin[k], x1 = dta$xmax[k],         # where on x
+         y0 = 0, y1 = 1,                             # where on plot (versus y)
+         # update aesthetics
+         fillcolor = dta$fill[1], opacity = dta$alpha[1], line = list(width = 0))
+  })
+  
+  ggplotly(gplt) %>%              # pre xaxis for dates
+    layout(xaxis = list(tickmode = "auto", type = "date", autorange = T),
+           shapes = NA) %>%            # remove migration garbage
+    fixer() %>%                        # fix dates - make them dates again
+    layout(shapes = shps)              # add new shapes
+}
+tSpan(Owenmore_Turbidity_Threshold_Plot)
+
+```
+
+# 6.0 Manually Identify Potential Water Quality Events with the aid of the interactive turbidity plot.
+
+## 6.1 Manually identify potential water quality events.
+The analyst manually identifies potential water quality events by visual inspection i.e. looking at changes in the trend in the turbidity plot.  
+
+
+The highlighted areas on the interactive turbidity plot for events can be used as an aid to this manually identification as they highlight values where the Turbidity value is \>/= upper bound of the Tukey Fences test for outliers. The highlighted data points are recorded in the 'Possible_Owenmore_Event_Alarm'column of the file 'OW061024_051124C_NoOutRange_TurbEvent' file and turbidity values at each timestep are recorded as either (true) if the Turbidity value \>/= upper bound of the Tukey Fences test for outliers, or 0 (false) if not. 
+
+### The highlighted areas can help identify potential events by drawing our attention to that area of the plot.  However, data points either side of these highlighted areas may also indicate events and it is for the analyst viewing the data to determine whether a datapoint is a potential outlier by following the procedure outlined below.
+
+The file 'OW061024_051124C_NoOutRange_TurbEvent' was copied by the
+analyst and renamed 'OW061024_051124C_NoOutRange_ManVer_TurbEvent.csv'.
+Note there is a gap in this data set between 21/10/2024 17:15:00 and
+22/10/2024 18:00:00 when the sonde was removed from the river to the
+laboratory for service and calibration. 
+An additional column 'Verified_OW_Event_Alarm' is manually added by the analyst to
+'OW061024_051124C_NoOutRange_ManVer_TurbEvent.csv' file. The analyst
+manually records at each timestep whether they think the turbidity value
+is a potential alarm by inserting either 1 (true) or 0 (false) into
+'Verified_OW_Event_Alarm' column based on visually examining the interactive
+turbidity plot in R which is produced in step 5.3.6 Interactive plot with highlighted areas on plot where turbidity is greater than the turbidity threshold value. The analyst may identify values either side of the highlighted areas on the plot as potential events and should insert 1 (true) at each timestep where this occurs.
+Once completed by the analyst, the 'OW061024_051124C_NoOutRange_ManVer_TurbEvent.csv' file is saved in the
+Man_Ver_Alarm folder in '06 Manually Identify Potential Water Quality Events/Output_Files' folder.
+
+# 7.0 Event Detection using EPA CANARY
+
+The software used for event detection was EPA CANARY-EDS. It is
+available on GitHub <https://github.com/USEPA/CANARY> and includes links
+to download the software, and a comprehensive CANARY user manual, a
+quick start guide and tutorials to practice running the code. 
+The EPA CANARY software will need to be downloaded and the OW061024_051124C_NoOutRange.csv
+file run through the CANARY software. The water quality parameters analysed in EPA CANARY were
+Temperature, Specific Conductivity and Turbidity.
+
+Four parameters in CANARY were varied to train the EPA CANARY software
+to identify probable water quality events in the dataset, with the aim
+of minimising the likelihood of false alarms. The parameters were
+history window, outlier threshold, BED window and event threshold. These
+parameters in CANARY were varied as per the method used in monitoring
+the Smith Branch watershed, Columbia, United States with the method to
+vary these parameters described in Section 3.2 CANARY event detection
+software and detailed in Table 3 [@burkhardt_near_2022]. Rainfall events were
+not filtered for the analysis on the sample file from the Owenmore
+River, Ireland.
+
+The output for step 7 event Detection using EPA CANARY is saved in 07 EPA CANARY
+Event Detection Folder consisting of 96 .csv output files in six
+different folders. Once the data file OW061024_051124C_NoOutRange was
+processed in CANARY the output from the CANARY Data files for each
+algorithm were graphed monthly with probability, and then converted to .csv
+files in CANARY.  
+
+# 8.0 Compare manually identified Owenmore turbidity events to events identified by CANARY
+
+This section of the code combines the manually identified events by the user with the output for each of the 96 algorithm files produced by CANARY into one dataframe, creating 96 new .csv files.  The files are saved into six directories (folders) in the same file format as the CANARY output with the file name structure: sitedate_algorithm type_algorithm details_algorithm number.  These files are saved in the directory associated with that data which is specified by the user by amending the code for the identifier in section 8.12.  In this example, the data to be processed was placed in the directory called Data1 and the identifier set as follows #data_set_identifier<-"Data1/".  Where mutiple datasets are to be processed the user places each dataset in it's own directory, e.g. Data1, Data2, Data3 etc and updates the code for data_set_identifier when running each dataset.  The code automatically creates a directory in Output_Files for each dataset specified and ran through the code e.g. Output_Files/Data1, Output_Files/Data2 etc. 
+
+The output for step 8 comparing manually identified and CANARY events is saved in 08 Manually compare events to CANARY events/Output_files.
+
+## 8.1 Specify the directory where the "manually verified event data" in located.
+
+### 8.1.1 The path for this directory should be given relative to the project directory.
+```{r}
+# Set the top directory for this step
+ManVer_file_top_directory<-"06 Manually Identify Potential Water Quality Events/Output_Files/"
+```
+
+### 8.1.2 This identifier is used to select the "manually verified event dataset" to be processed.
+```{r}
+data_set_identifier<-"Data1/"
+```
+
+#### Sets up the full path to the "manually verified event data".
+```{r}
+ManVer_file_directory<-paste0(ManVer_file_top_directory,data_set_identifier)
+(ManVer_file<-list.files(ManVer_file_directory,pattern='ManVer_TurbEvent'))
+ManVer_file_full_path<-paste0(ManVer_file_directory,ManVer_file)
+```
+
+## 8.2 Load the "manually verified event data" and format the dataframe.
+
+#### Load the "manually verified event data".
+```{r}
+ManVer_TurbEvent<-fread(ManVer_file_full_path,header=T,stringsAsFactors = F, select = c("DateTime","Turbidity","Verified_OW_Event_Alarm"))
+
+str(ManVer_TurbEvent)
+```
+
+##### Change DateTime from chr to Date (as.POSIXct stores both a date and time with an associated time zone)
+```{r}
+ManVer_TurbEvent$DateTime<-as.POSIXct(ManVer_TurbEvent$DateTime, format = "%d/%m/%Y %H:%M", tz="UTC")
+str(ManVer_TurbEvent)
+```
+
+##### Rename to TIME_STEP to match the Owenmore CANARY File
+```{r}
+ManVer_TurbEvent<- ManVer_TurbEvent%>% rename(TIME_STEP = DateTime)
+```
+
+## 8.3 Get list of directory names in the folder "07 EPA CANARY Event Detection"
+
+#### Each directory is associated with a different configuration of CANARY.
+#### Within each directory are output files generated by various versions of the algorithm.
+#### The path for top_dir should be given relative to the project directory.
+```{r}
+output_file_top_directory<-"07 EPA CANARY Event Detection/Output_Files/"
+
+output_file_full_path<-paste0(output_file_top_directory,data_set_identifier)
+```
+
+##### List directories but not sub-directories.
+```{r}
+(directory_list<-list.dirs(output_file_full_path,recursive=FALSE))
+
+ID_String<-vector(mode="character",length=length(directory_list))
+for (i in 1:length(directory_list)){
+
+  ID_String[i]<-paste0("_L",sub(".*_L","",directory_list[i]))
+}
+```
+
+## 8.4 Load the Owenmore CANARY file From 07 EPA CANARY Event Detection Folder
+
+```{r}
+# Now, step through each folder and locate the csv files for each algorithm.
+# Loop over the directories
+for (i in 1:length(directory_list)){
+  
+  # List all files in each parent directory, in turn.
+  (files_list<-list.files(directory_list[i],pattern='alg'))   #list all files in specified directory (directory_list[i]) that match pattern 'alg'.
+  alg_ver<-vector(mode="character",length=length(files_list)) # initialise two character vectors, alg_ver and Output_filename_string, to store information about the files.
+  Output_filename_string<-vector(mode="character",length=length(files_list))
+
+# Loop through each file in the files_list  
+  for (j in 1:length(files_list)){
+    
+    
+    # Put together the input filename and directory it is in.
+    input_filename_string<-paste0(directory_list[i],'/',files_list[j])
+    
+    # Read each of the "CANARY Event Detection" data files into a dataframe called "Input_Data"
+    Input_Data<-fread(input_filename_string, header=T, stringsAsFactors = F,
+                      select = c("TIME_STEP","P_Event"))
+    
+    
+    # Put together string name for output file.
+    
+    # First get the "algorithm version from each filename.
+    # It's found by taking the part of the filename after the word "details" without the last 5 characters.
+    
+    alg_ver[j]<-str_sub(sub(".*details-","",files_list[j]), end=-5)
+    
+    # Setup the output filename.
+    #(output_filename_string<-paste0("CANARYOwenmore",ID_String[i],alg_ver))
+    
+    #str(Input_Data)
+    
+    #Change TIME_STEP from chr to Date 
+    Input_Data$TIME_STEP<-as.POSIXct(Input_Data$TIME_STEP, format = "%d/%m/%Y %H:%M", tz="UTC")
+    
+    # Change any negative values in CANARYOwenmoreAlg1 P_Event to absolute values to facilitate matching query
+    Input_Data$`P_Event`<-abs(Input_Data$`P_Event`)
+    
+
+    
+    # A column containing the "manually verified event data" is added to the "CANARY" dataframe and saved into a new...
+    #... data frame called "Combined Data".
+    
+    Combined_Data<-merge(Input_Data,ManVer_TurbEvent,by="TIME_STEP")
+    
+    #(which(is.na(Input_Data), arr.ind=TRUE))
+    
+    # View the first few rows and the structure of the combined dataframe
+    #head(Combined_Data)
+    #str(Combined_Data)
+    
+    # Export this data table as.csv file
+    here() # indicates the working directory
+    Combined_Data$TIME_STEP<-format(Combined_Data$TIME_STEP) # this prevents 00:00:00 being removed from Timestamps
+    
+    
+    # Now setup directory and filename for saving the combined data file. 
+    
+    Output_directory_string<-paste0("08 Manually compare events to CANARY events/Output_Files/",data_set_identifier)
+    Output_subdirectory_string<-paste0("Output_Files_",ID_String[i],"/")
+
+    Output_directory_string_complete<-paste0(Output_directory_string,Output_subdirectory_string)
+    
+    # Extract the location and date range information from the "manually verified event data" filename.
+    # i.e, take the first part of the filename before the "_ManVer_TurbEvents...." 
+    
+    Location_and_Date_Range_ID_String<-sub("\\_M.*","",ManVer_file)
+    
+    Output_filename_string[j]<-paste0(Location_and_Date_Range_ID_String,ID_String[i],alg_ver[j],".csv")
+    
+    (Output_file_path_and_name<-paste0(Output_directory_string,Output_subdirectory_string,Output_filename_string[j]))
+    
+    if (!dir.exists(Output_directory_string_complete)) dir.create(Output_directory_string_complete, recursive = TRUE)
+    
+   write.csv(Combined_Data,Output_file_path_and_name, row.names=FALSE)
+   if (j==1){
+    # Only print this message once per processed directory.
+    cat("Writing data to file:\n",Output_file_path_and_name,"\n")}
+  }
+}
+```
+
+# 9.0 Compare the Owenmore CANARY files to the manually identified events to identify the most suitable CANARY algorithm.
+
+This is the last step in the workflow where the events identified are compared in order to identify the most suitable algorithm for that particular site based on the data provided to 'train' CANARY.  This workflow used changes in the turbidity signal to identify potential water quality events at these two river stations as the turbidity values for the monitoring sites examined did not show a diurnal trend and baseline levels for turbidity at both sites was low.  
+
+The identification of full and partial matches was carried out by analysing the output of step 8 where the output files of CANARY for each algorithm file were combined with manually identified event file. Events were classified as FULL or PARTIAL matches depending on whether the event time start timestep or time end timestep matched fully or partially.A description of the logic detailing how full and partial matches were classified is available in the Supplementary Material directory. Using the classification for matches the combined files (output for step 8)  were analysed for matches by looping over each file to find where time steps either fully or partially matched for identified events.  This was done in a step by step fashion to allow the user to verify that this code is correctly matching events for their data.  The logic for how the files were matched is contained in the 'Code Logic for Finding Matches between manually verified events and EPA events' in the supplementary material folder.   
+
+
+### Determine the number of matches and identify the most suitable CANARY algorithm.
+
+## 9.1 Identify the folder for processing
+Here, enter the directory containing the folders for processing
+```{r}
+top_directory<-paste0("08 Manually compare events to CANARY events/Output_Files/",data_set_identifier)
+
+# List directories but not sub-directories.
+(directory_list<-list.dirs(top_directory,recursive=FALSE))
+
+# Only take the directory names which include the string "Output_Files"
+directory_list<-directory_list[grepl("Output_Files",directory_list)]
+
+# Set up dataframe for output.
+Algorithm_Scores<-data.frame(algorithm=character(),FULL_MATCH=integer(),PARTIAL_MATCH=integer(),TOTAL_MATCH=integer(),Total_CANARY_Events=integer(),Total_Verified_Events=integer(),Percent_CANARY_Agreement_to_TOTAL_Verified_Events=numeric(),stringsAsFactors = FALSE)
+```
+
+## 9.2 Loop over all the directories for processing.
+```{r}
+for (k in 1:length(directory_list)){
+  
+# List all files in each parent directory, in turn.
+# Only consider filenames that have the string 'alg' in them.
+  
+  (files_list<-list.files(directory_list[k],pattern='alg'))
+
+# Loop over all the files in the current directory.
+  for (j in 1:length(files_list)){
+    
+    # Put together the directory path and filename for the current file to be processed.
+    input_filename_string<-paste0(directory_list[k],'/',files_list[j])
+    
+    dat<-read.csv(input_filename_string, header=T, stringsAsFactors = F) # loading it the 96 .csv files for CANARY algorithms
+    
+    
+    # Compare the Owenmore Turb Events to CANARY algorithm to determine the number of matches. 
+    
+    # The method requires an extra row at the top and bottom of the dataframe.
+    # Add row of 0s at start of dataframe.
+    dat<-rbind(0,dat)
+    
+    # Add row of 0s at end of dataframe.
+    dat<-rbind(dat,0)
+    
+    #Initialise variables to 0
+    dat<-cbind(dat,Ver_Alarm_Start=0,Ver_Alarm_End=0)
+    
+    #Initialise variables to 0
+    dat<-cbind(dat,CANARYTurb_Alarm_Start=0,CANARYTurb_Alarm_End=0)
+    
+    #Initialise variables to 999
+    dat<-cbind(dat, FULL_MATCH=999,PARTIAL_MATCH=999)
+    
+    
+    
+    
+    # Before doing the match, check for any na values in the dataframe, there       #  should be none (0 rows) or the subsequent code won't run.
+    # if NA is present the code returns where NA occurs in the dataframe.
+    dat[which(rowSums(is.na(dat[,-1]))>0),]
+    
+    
+## Also, ensure that there is a least 1 alarm present in the ##"Verified_OW_Event_Alarm" Column.
+
+contains_one<-any(dat$Verified_OW_Event_Alarm==1)
+if(!contains_one){
+ stop("There are no Verified Alarms in the data, nothing to do!")
+
+}
+
+    
+    # Any records containing NA values should be checked and must be removed for the code below to run.
+    
+    # The code will iterate over rows of the dataframe starting from row 2 
+    # This loop locates the start and end point for each Verified alarm and labels these as '1' in the Ver_Alarm_Start/End columns
+    # Also, this loop locates the start and end point for each CANARY alarm and labels these as '1' in the CANARYTurb_Alarm_Start/End columns
+    
+    for (i in 2:nrow(dat)){
+      
+      # Checks if the value in Verified_OW_Event_Alarm of the previous row (i-1) is 0 AND the current row (i) is 1.  If the condition is TRUE,
+      # the alarm has commenced and 1 is placed in Ver_Alarm_Start which marks the start of the transition.
+      if ((dat$Verified_OW_Event_Alarm[i-1]==0) & (dat$Verified_OW_Event_Alarm[i]==1))
+      {dat$Ver_Alarm_Start[i]<-1}
+      
+      # Checks if the value in Verified_OW_Event_Alarm of the previous row (i-1) is 1 AND the current row (i) is 0.  If the condition is TRUE,
+      # the alarm has finished and 1 is placed in Ver_Alarm_End which marks the end of the transition.
+      if ((dat$Verified_OW_Event_Alarm[i-1]==1) & (dat$Verified_OW_Event_Alarm[i]==0))
+      {dat$Ver_Alarm_End[i-1]<-1}
+      
+      # As above for P_Event
+      #if ((dat$P_Event[i-1]==0.00000) & (dat$P_Event[i]==1.000000))
+      #{dat$CANARYTurb_Alarm_Start[i]<-1}
+      if ((dat$P_Event[i-1]<1) & (dat$P_Event[i]==1.000000))
+     {dat$CANARYTurb_Alarm_Start[i]<-1}
+      
+      if ((dat$P_Event[i-1]==1) & (dat$P_Event[i]<1))
+      {dat$CANARYTurb_Alarm_End[i-1]<-1}
+      
+    }
+    
+    
+    
+    # locate the indices for the start and end points of each CANARY Alarm
+    CANARYTurb_Alarm_Start_Indices<-grep(1,dat$CANARYTurb_Alarm_Start) 
+    CANARYTurb_Alarm_End_Indices<-grep(1,dat$CANARYTurb_Alarm_End) 
+    
+    # locate the indices for the start and points of each Verified Alarm
+    Ver_Alarm_Start_Indices<-grep(1,dat$Ver_Alarm_Start) 
+    Ver_Alarm_End_Indices<-grep(1,dat$Ver_Alarm_End) 
+    
+    # ALL CASES 
+    # This only runs if "CANARY" has found at least one alarm.
+    if(length(CANARYTurb_Alarm_Start_Indices)>0){ # checks for any start indices in the CANARYTurb_Alarm_Start_Indices vector
+      for (m in 1:length(Ver_Alarm_Start_Indices)){  # This loop iterates over each start index in Ver_Alarm_Start_Indices.
+        Ver_Alarm_Chunk_Length<-(Ver_Alarm_End_Indices[m]-Ver_Alarm_Start_Indices[m])+1  # calculates the length of the current alarm chunk by subtracting the start index from the end index and adding 1 (to include both endpoints)
+        CANARY_TEST_Chunk1<-dat$P_Event[(Ver_Alarm_Start_Indices[m]):(Ver_Alarm_End_Indices[m])] # extract a subset of data from 'dat' dataframe based on the start and end indices
+        
+        CANARY_Alarm_ON_Chunk1_Length<-sum(CANARY_TEST_Chunk1)
+        
+        if (Ver_Alarm_Chunk_Length==CANARY_Alarm_ON_Chunk1_Length)
+        {
+          # Now extend the CANARY test Chunk by 1 step above and below. 
+          # If FULL_MATCH, then sum(CANARY test chunk) will not change.
+          CANARY_TEST_Chunk2<-dat$P_Event[(Ver_Alarm_Start_Indices[m]-1):(Ver_Alarm_End_Indices[m]+1)]
+          CANARY_Alarm_ON_Chunk2_Length<-sum(CANARY_TEST_Chunk2)
+          
+          if (CANARY_Alarm_ON_Chunk1_Length==CANARY_Alarm_ON_Chunk2_Length)
+          {dat$FULL_MATCH[Ver_Alarm_End_Indices[m]]<-"TRUE"}
+          
+          else
+          {dat$PARTIAL_MATCH[Ver_Alarm_End_Indices[m]]<-"TRUE"}
+        }
+        
+        
+        else if (CANARY_Alarm_ON_Chunk1_Length>=1){
+          dat$PARTIAL_MATCH[Ver_Alarm_End_Indices[m]]<-"TRUE"
+        }
+        
+      }
+    }
+    
+    (count_FULL_MATCH <- length(which(dat$FULL_MATCH == "TRUE")))
+    (count_PARTIAL_MATCH <- length(which(dat$PARTIAL_MATCH == "TRUE")))
+    (count_TOTAL_MATCH<-count_FULL_MATCH+count_PARTIAL_MATCH)
+    
+    # Count the number of actual alarms.
+    
+    Num_Ver_Alarms<-sum(dat$Ver_Alarm_Start==1)
+    
+    # Count the number of CANARY alarms.
+    
+    Num_CANARY_Alarms<-sum(dat$CANARYTurb_Alarm_Start==1)
+    
+    # Calculate the % Agreement between CANARY and Ver Alarms  
+    Percent_CANARY_Agreement_to_TOTAL_Verified_Events<-round((count_TOTAL_MATCH/Num_Ver_Alarms)*100,2)
+    
+    current_row_for_output<-list(files_list[j], count_FULL_MATCH, count_PARTIAL_MATCH, count_TOTAL_MATCH, Num_CANARY_Alarms, Num_Ver_Alarms, Percent_CANARY_Agreement_to_TOTAL_Verified_Events)
+    
+    Algorithm_Scores[nrow(Algorithm_Scores) + 1,] <- current_row_for_output
+    
+    # Ensure that a folder is available to receive the output data/ 
+    # "data_set_identifer" will be used as the folder name.
+    
+    if (!dir.exists(paste0('09 ID CANARY Algorithm for turbidity events/Output_Files/',data_set_identifier)))           {dir.create(paste0('09 ID CANARY Algorithm for turbidity events/Output_Files/',data_set_identifier), recursive = TRUE)}
+
+    
+    dat_out_directory<-paste0('09 ID CANARY Algorithm for turbidity events/Output_Files/',data_set_identifier,'Dat_Files')
+    
+    # Save Current dat to file, for troubleshoot or testing as required.
+    if (!dir.exists(dat_out_directory)) dir.create(dat_out_directory, recursive = FALSE)
+    
+    write.csv(dat,(paste0(dat_out_directory,'/Dat_For_',files_list[j])), row.names=FALSE)
+    if (j==1){
+    # Only print this message once per processed directory.
+    cat("Writing data to file:\n",(paste0(dat_out_directory,'/Dat_For_',files_list[j])),"\n")}
+    
+  }
+}
+
+dat$TIME_STEP<-format(dat$TIME_STEP) # this prevents 00:00:00 being removed from Timestamps
+
+Location_and_Date_Range_ID_String<-paste0(sub("\\_L.*","",files_list[1]),"_")
+Filename_and_path_for_algorithm_scores<-paste0("09 ID CANARY Algorithm for turbidity events/Output_Files/",data_set_identifier,Location_and_Date_Range_ID_String,"Algo_scores.csv")
+write.csv(Algorithm_Scores,Filename_and_path_for_algorithm_scores, row.names=FALSE)
+
+```
+### 9.3 Output files for comparing the CANARY files to the manually identified events and identify the most suitable CANARY algorithm.
+
+The output for step 9 identifying the best CANARY algorithm for turbidity events is saved in 09 ID CANARY Algorithm for turbidity events/Output_Files.  It consists of two outputs, a Dat_Files directory containing 96 files and an 'Algo_scores files.  
+
+#### 9.3.1 The Dat_Files directory
+The Dat_Files directory contains each of the CANARY alorithm output files matched to the manually verified events file.  In addition, for the sample data provided with this workflow, an example of how matching could be verified by the user is included in the file 'Match_highlighted_for_Dat_For_OW061024_051124C_LPCF_BED6_ET0.89063alg_1' in the supplementary material folder.
+```{r}
+head(dat)
+```
+
+#### 9.3.2 Algo scores file
+The algo scores file summarises the number of full and partial matches for each CANARY algorithm and assigns a percent agreement to the total number of verified events.  This can be used to identify the most suitable algorithm for the particular monitoring station based on the data provided to 'train' CANARY.  It should be noted that adequate data covering a range of events over a time period is required to train CANARY and identify the most suitable algorithm.  The optimum time period will depend on the frequency of events and the variability in event profiles for each monitoring station.
+For this short dataset all algorithms show 100% identification of events i.e. they all identified the 4 manually identified events so more data would be required to distinguish the most suitable algorithm for this monitoring location. 
+
+```{r}
+head(Algorithm_Scores)
+```
+
+
