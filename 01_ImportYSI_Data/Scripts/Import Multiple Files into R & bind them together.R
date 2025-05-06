@@ -16,6 +16,7 @@ here::here()
 list.files("../")
 
 # Load the .csv data files
+#' **Note: For these files, only data for temperature, specific conductivity and turbidity are valid as only these sensors were calibrated.**
 ### Watch out for spaces in column names in some txt files if importing by variable name. 
 OW061024<-fread("./01_ImportYSI_Data/Data/OW061024.txt",skip=1, header=T,select = c("      Date", "    Time"," Temp","SpCond","Turbid+"))[-1:-2] 
 OW221024<-fread("./01_ImportYSI_Data./Data/OW221024.txt",skip=1, header=T,select = c("      Date", "    Time"," Temp","SpCond","Turbid+"))[-1:-2] 
@@ -26,7 +27,8 @@ OW221024$DateTime<-with(OW221024, dmy(OW221024$`      Date`) + hms(OW221024$`   
 str(OW061024)
 str(OW221024)
 
-## Review imported file and remove data for before sensor deployed in the river if sensor is running before being deployed and after being removed##
+## Review imported file and remove out-of-the-water-edits i.e. data before sensor was deployed in the river if sensor is running before being deployed, 
+# and data after sensor is removed from the river.  Often the sensor will be put into operation to check everything is logging before being deployed in the water. 
 OW061024 <- OW061024 %>% filter(DateTime > ymd_hms('2024-10-06 13:40:00'))
 # and after removed from river
 OW061024 <- OW061024 %>% filter(DateTime < ymd_hms('2024-10-21 17:20:00'))
@@ -57,6 +59,13 @@ OWCombined$`Temp`<-as.numeric((OWCombined$Temp))
 OWCombined$Turbidity<-as.numeric((OWCombined$Turbidity))
 str(OWCombined)
 
+Data Integrity
+
+## 2.1 Embed source data context for data integrity by adding variable labels.
+# To ensure the integrity of the data persists once imported into R, it is
+# very useful to embed the source data context in the datafile.  Embed the
+# source data context by adding variable labels to the sensor data. 
+# In this case the site name and sensor details are embedded.
 # Embed the source data context in the datafile by adding variable labels.
 OWCombined<-OWCombined|>
   labelled::set_variable_labels(
@@ -69,6 +78,11 @@ OWCombined<-OWCombined|>
 
 # To view the variable labels
 View(OWCombined)
+
+# Export the tidyied datafile as a .csv file and as .rds file to working directory
+# Note the datalabels are lost whenexporting the files as .csv but are maintained when exported as .rds file.
+# This file is used for visualisation and event detection. 
+
 
 # Export the cleaned datafile as .csv to the working directory #
 write.table(OWCombined,"./01_ImportYSI_Data/Output_Files/OW061024_051124C.csv",row.names=F, sep = ",")
