@@ -1,4 +1,4 @@
-### Data Visualisation of YSI Data using ggplot2 ###
+### Data Visualisation of Data using ggplot2 ###
 
 
 # Load libraries - you may need to install them first. 

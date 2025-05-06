@@ -1,6 +1,6 @@
 #### SUMMARY STATISTICS ####
 
-# You may need to install packagages before loading them.
+# You may need to install packages before loading them.
 
 # Load packages
 library(dplyr)
