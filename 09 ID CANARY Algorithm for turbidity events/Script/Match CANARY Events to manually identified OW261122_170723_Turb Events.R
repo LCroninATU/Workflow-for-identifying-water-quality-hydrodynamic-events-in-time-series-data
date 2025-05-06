@@ -15,9 +15,9 @@ library(tidyverse) # For renaming variable names.
 # This was done in a step by step fashion to allow the user to verify that this code is correctly matching events for their data.  The logic for how the files were matched is contained in the 'Code Logic for Finding Matches between manually verified events and EPA events' in the supplementary material folder.   
 
 
-## 9.1 Identify the folder for processing
-#' Here, enter the directory containing the folders for processing
-## ----------------------------------------------------------------------------------------------------------------------
+## Identify the folder for processing
+# Here, enter the directory containing the folders for processing
+
 top_directory<-paste0("08 Manually compare events to CANARY events/Output_Files/",data_set_identifier)
 
 # List directories but not sub-directories.
@@ -29,9 +29,8 @@ directory_list<-directory_list[grepl("Output_Files",directory_list)]
 # Set up dataframe for output.
 Algorithm_Scores<-data.frame(algorithm=character(),FULL_MATCH=integer(),PARTIAL_MATCH=integer(),TOTAL_MATCH=integer(),Total_CANARY_Events=integer(),Total_Verified_Events=integer(),Percent_CANARY_Agreement_to_TOTAL_Verified_Events=numeric(),stringsAsFactors = FALSE)
 
-#' 
-#' ## 9.2 Loop over all the directories for processing.
-## ----------------------------------------------------------------------------------------------------------------------
+
+# Loop over all the directories for processing.
 for (k in 1:length(directory_list)){
   
   # List all files in each parent directory, in turn.
@@ -198,22 +197,19 @@ Filename_and_path_for_algorithm_scores<-paste0("09 ID CANARY Algorithm for turbi
 write.csv(Algorithm_Scores,Filename_and_path_for_algorithm_scores, row.names=FALSE)
 
 
-#' ### 9.3 Output files for comparing the CANARY files to the manually identified events and identify the most suitable CANARY algorithm.
-#' 
-#' The output for step 9 identifying the best CANARY algorithm for turbidity events is saved in 09 ID CANARY Algorithm for turbidity events/Output_Files.  It consists of two outputs, a Dat_Files directory containing 96 files and an 'Algo_scores files.  
-#' 
-#' #### 9.3.1 The Dat_Files directory
-#' The Dat_Files directory contains each of the CANARY alorithm output files matched to the manually verified events file.  In addition, for the sample data provided with this workflow, an example of how matching could be verified by the user is included in the file 'Match_highlighted_for_Dat_For_OW061024_051124C_LPCF_BED6_ET0.89063alg_1' in the supplementary material folder.
-## ----------------------------------------------------------------------------------------------------------------------
+# Output files for comparing the CANARY files to the manually identified events and identify the most suitable CANARY algorithm.
+
+# The output for step 9 identifying the best CANARY algorithm for turbidity events is saved in 09 ID CANARY Algorithm for turbidity events/Output_Files.  It consists of two outputs, a Dat_Files directory containing 96 files and an 'Algo_scores files.  
+ 
+# The Dat_Files directory
+# The Dat_Files directory contains each of the CANARY alorithm output files matched to the manually verified events file.  In addition, for the sample data provided with this workflow, an example of how matching could be verified by the user is included in the file 'Match_highlighted_for_Dat_For_OW061024_051124C_LPCF_BED6_ET0.89063alg_1' in the supplementary material folder.
 head(dat)
 
-#' 
-#' #### 9.3.2 Algo scores file
-#' The algo scores file summarises the number of full and partial matches for each CANARY algorithm and assigns a percent agreement to the total number of verified events.  This can be used to identify the most suitable algorithm for the particular monitoring station based on the data provided to 'train' CANARY.  It should be noted that adequate data covering a range of events over a time period is required to train CANARY and identify the most suitable algorithm.  The optimum time period will depend on the frequency of events and the variability in event profiles for each monitoring station.
-#' For this short dataset all algorithms show 100% identification of events i.e. they all identified the 4 manually identified events so more data would be required to distinguish the most suitable algorithm for this monitoring location. 
-#' 
-## ----------------------------------------------------------------------------------------------------------------------
+
+# Algo scores file
+# The algo scores file summarises the number of full and partial matches for each CANARY algorithm and assigns a percent agreement to the total number of verified events.  This can be used to identify the most suitable algorithm for the particular monitoring station based on the data provided to 'train' CANARY.  It should be noted that adequate data covering a range of events over a time period is required to train CANARY and identify the most suitable algorithm.  The optimum time period will depend on the frequency of events and the variability in event profiles for each monitoring station.
+# For this short dataset all algorithms show 100% identification of events i.e. they all identified the 4 manually identified events so more data would be required to distinguish the most suitable algorithm for this monitoring location. 
+ 
 head(Algorithm_Scores)
 
-#' 
-#' 
+
