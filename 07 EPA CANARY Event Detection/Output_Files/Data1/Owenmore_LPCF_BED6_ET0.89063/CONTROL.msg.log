@@ -1,0 +1,73 @@
+# Messenger startup: 20250319T122448
+- message:
+    timestamp:20250319T122449
+    to:       CANARY
+    from:     CONTROL
+    subject:  WELCOME
+    content:  19-Mar-2025 12:24:48
+
+- message:
+    timestamp:20250319T122449
+    to:       CANARY
+    from:     CONTROL
+    subject:  START OW061024_051124C_ET0.89063
+
+- message:
+    timestamp:20250319T122449
+    to:       CONTROL
+    from:     CANARY
+    subject:  START OW061024_051124C_ET0.89063 COMPLETED
+
+- message:
+    timestamp:20250319T122449
+    to:       CANARY
+    from:     CONTROL
+    subject:  TIMESTEP START
+    content:  06/10/2024 13:45:00
+
+- message:
+    timestamp:20250319T122449
+    to:       CONTROL
+    from:     CANARY
+    subject:  TIMESTEP START PROCESSED
+    content:  06/10/2024 13:45:00
+
+- message:
+    timestamp:20250319T122449
+    to:       CANARY
+    from:     CONTROL
+    subject:  TIMESTEP END
+    content:  05/11/2024 11:45:00
+
+- message:
+    timestamp:20250319T122547
+    to:       CONTROL
+    from:     CANARY
+    subject:  TIMESTEP END PROCESSED
+    content:  05/11/2024 11:45:00
+
+- message:
+    timestamp:20250319T122548
+    to:       CANARY
+    from:     CONTROL
+    subject:  STOP OW061024_051124C_ET0.89063
+
+- message:
+    timestamp:20250319T122548
+    to:       CONTROL
+    from:     CANARY
+    subject:  STOP OW061024_051124C_ET0.89063 COMPLETED
+
+- message:
+    timestamp:20250319T122548
+    to:       CANARY
+    from:     CONTROL
+    subject:  SHUTDOWN
+
+- message:
+    timestamp:20250319T122548
+    to:       CONTROL
+    from:     CANARY
+    subject:  SHUTDOWN COMPLETED
+
+- messenger shutdown: "20250319T122549"
