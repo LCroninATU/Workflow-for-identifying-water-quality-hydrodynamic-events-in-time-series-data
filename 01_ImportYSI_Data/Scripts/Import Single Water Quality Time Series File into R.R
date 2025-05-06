@@ -73,7 +73,7 @@ str(OW061024)
 str(OW221024)
 
 
-# 1.4 Tidy the data and format the imported water quality data
+# Tidy the data and format the imported water quality data
 
 #Combine date and time columns to form DateTime & change from chr to as.POSIXct (as.POSIXct stores both a date and time with an associated time zone)
 OW061024$DateTime<-with(OW061024, dmy(OW061024$`      Date`) + hms(OW061024$`    Time`) )
@@ -117,62 +117,10 @@ OW221024 <- OW221024 %>% filter(DateTime < ymd_hms('2024-11-05 11:46:50'))
 
 # and similarly if the sensor was checked in situ during deployment
 
-# 1.5 Combine the files into a single dataframe if importing multiple files individually.
+# Combine the files into a single dataframe if importing multiple files individually.
 # To process the data as one file for visualization and event detection, the files need to be joined together.
 # Bind OW061024 and OW221024 to form new object OWCombined
 OWCombined<- bind_rows(OW061024,OW221024)
 
 
-# Data Integrity
-
-# Embed source data context for data integrity by adding variable labels.
-# To ensure the integrity of the data persists once imported into R, it is
-# very useful to embed the source data context in the datafile.  Embed the
-# source data context by adding variable labels to the sensor data. 
-# In this case the site name and sensor details are embedded.
-
-# Embed the source data context in a single datafile by adding variable labels.
-
-OW061024<-OW061024|>
-  labelled::set_variable_labels(
-    DateTime = "Measurement Date and Time (GMT) of River Owenmore ",
-    Temp = "Temperature (degC) YSI6600EDSV2_2 6560 Conductivity_Temperature Probe",
-    SpCond = "Specific Conductance uScm-1 YSI6600EDSV2-2 6560 Conductivity_Temperature Probe",
-    Turbidity = "Turbidity (NTU) - YSI_6600_EDS_V2-2 - 6136 Turbidity Probe"
-  )
-
-# To view the variable labels
-View(OW061024)
-
-#  OR Embed the source data context in a combined datafile by adding variable labels
-OWCombined<-OWCombined|>
-  labelled::set_variable_labels(
-    DateTime = "Measurement Date and Time of River Owenmore, Sligo ",
-    Temp = "Temperature (degC) YSI6600EDSV2_2 6560 Conductivity_Temp. Probe",
-    SpCond = "Specific Conductance uScm-1 YSI6600EDSV2-2 6560 Conductivity_Temp. Probe",
-    Turbidity = "Turbidity (NTU) - YSI_6600_EDS_V2-2 - 6136 Turbidity Probe"
-  )
-
-# To view the variable labels
-# A new tab opens displaying the combined dataframe.
-View(OWCombined)   
-
-# Export the tidyied datafile as a .csv file and as .rds file to working directory
-# NOTE: the datalabels are lost when exporting the files as .csv but are maintained when exported as .rds file.
-# This file is used for visualisation and event detection. 
-
-# Export the single cleaned datafile as .csv to the working directory #
-write.table(OW061024,"./Output_Files/OW061024C.csv",row.names=F, sep = ",")
-
-# Export the combined cleaned datafile as .csv to the working directory #
-write.table(OWCombined,"./02_Embed_Source_Data_Context/Output_Files/OW061024_051124C.csv",row.names=F, sep = ",")
-
-# save the file as Rds
-saveRDS(OW061024, file = "./Output_Files/OW061024C.RData")
-saveRDS(OW061024, file = "./Output_Files/OW061024C.rds")
-
-# save the file as RData (useful when importing into R again)
-saveRDS(OWCombined, file = "./02_Embed_Source_Data_Context/Output_Files/OW061024_051124C.rds")
-
-# Record the Session information
-sessionInfo()
+# NOTE: Continue to script for step 02 to embed source data context and save (export) the tidied dataframe as .csv and .rds files.

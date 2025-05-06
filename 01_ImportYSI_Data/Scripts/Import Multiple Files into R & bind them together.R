@@ -59,37 +59,7 @@ OWCombined$`Temp`<-as.numeric((OWCombined$Temp))
 OWCombined$Turbidity<-as.numeric((OWCombined$Turbidity))
 str(OWCombined)
 
-Data Integrity
-
-## 2.1 Embed source data context for data integrity by adding variable labels.
-# To ensure the integrity of the data persists once imported into R, it is
-# very useful to embed the source data context in the datafile.  Embed the
-# source data context by adding variable labels to the sensor data. 
-# In this case the site name and sensor details are embedded.
-# Embed the source data context in the datafile by adding variable labels.
-OWCombined<-OWCombined|>
-  labelled::set_variable_labels(
-    DateTime = "Measurement Date and Time (GMT) of River Owenmore ",
-    Temp = "Temperature (degC) YSI6600EDSV2_2 6560 Conductivity_Temperature Probe",
-    SpCond = "Specific Conductance uScm-1 YSI6600EDSV2-2 6560 Conductivity_Temperature Probe",
-    Turbidity = "Turbidity (NTU) - YSI_6600_EDS_V2-2 - 6136 Turbidity Probe"
-  )
-
-
-# To view the variable labels
-View(OWCombined)
-
-# Export the tidyied datafile as a .csv file and as .rds file to working directory
-# Note the datalabels are lost whenexporting the files as .csv but are maintained when exported as .rds file.
-# This file is used for visualisation and event detection. 
-
-
-# Export the cleaned datafile as .csv to the working directory #
-write.table(OWCombined,"./01_ImportYSI_Data/Output_Files/OW061024_051124C.csv",row.names=F, sep = ",")
-
-# save the file as RData
-saveRDS(OWCombined, file = "./01_ImportYSI_Data/Output_Files/OW061024_051124C.RData")
-saveRDS(OWCombined, file = "./01_ImportYSI_Data/Output_Files/OW061024_051124C.rds")
+# NOTE: Continue to script for step 02 to embed source data context and save (export) the tidied dataframe as .csv and .rds files.
 
 # Session information
 sessionInfo()
