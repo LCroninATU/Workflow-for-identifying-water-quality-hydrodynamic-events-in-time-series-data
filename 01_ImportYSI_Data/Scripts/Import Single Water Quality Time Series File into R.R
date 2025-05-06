@@ -1,5 +1,8 @@
 ### IMPORT River Owenmore YSI DATA ###
 
+# Packages may first need to be installed before loading.
+
+# Load the packages
 library(data.table)
 library(dplyr)
 library(lubridate)

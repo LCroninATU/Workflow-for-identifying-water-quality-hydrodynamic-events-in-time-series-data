@@ -1,6 +1,6 @@
 ### Embed Source Data Context into Dataframe ###
 
-# Install libraries
+# Load libraries (they may need to be installed first)
 
 library(scales)
 library(tidyverse)
@@ -21,7 +21,7 @@ here::here()
 # source data context by adding variable labels to the sensor data. 
 # In this case the site name and sensor details are embedded.
 
-# Embed the source data context in a single datafile by adding variable labels.
+# If only a single file imported - Embed the source data context in a single datafile by adding variable labels.
 
 OW061024<-OW061024|>
   labelled::set_variable_labels(
@@ -34,7 +34,7 @@ OW061024<-OW061024|>
 # To view the variable labels
 View(OW061024)
 
-#  OR Embed the source data context in a combined datafile by adding variable labels
+#  For combined files - Embed the source data context in a combined datafile by adding variable labels
 OWCombined<-OWCombined|>
   labelled::set_variable_labels(
     DateTime = "Measurement Date and Time of River Owenmore, Sligo ",
@@ -52,16 +52,16 @@ View(OWCombined)
 # This file is used for visualisation and event detection. 
 
 # Export the single cleaned datafile as .csv to the working directory #
-write.table(OW061024,"./Output_Files/OW061024C.csv",row.names=F, sep = ",")
+write.table(OW061024,"./02_Embed_Source_Data_Context/Output_Files/OW061024C.csv",row.names=F, sep = ",")
 
 # Export the combined cleaned datafile as .csv to the working directory #
 write.table(OWCombined,"./02_Embed_Source_Data_Context/Output_Files/OW061024_051124C.csv",row.names=F, sep = ",")
 
-# save the file as Rds
-saveRDS(OW061024, file = "./Output_Files/OW061024C.RData")
-saveRDS(OW061024, file = "./Output_Files/OW061024C.rds")
+# save the single file as Rds
+saveRDS(OW061024, file = "./02_Embed_Source_Data_Context/Output_Files/OW061024C.RData")
+saveRDS(OW061024, file = "./02_Embed_Source_Data_Context/Output_Files/OW061024C.rds")
 
-# save the file as RData (useful when importing into R again)
+# save the combined file as .rds
 saveRDS(OWCombined, file = "./02_Embed_Source_Data_Context/Output_Files/OW061024_051124C.rds")
 
 # Record the Session information

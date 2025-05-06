@@ -1,10 +1,13 @@
 ### Data Visualisation of YSI Data using ggplot2 ###
 
 
-# Install libraries
+# Load libraries - you may need to install them first. 
 library(ggplot2)
 library(scales)
 library(plotly)
+library(cowplot)
+library (gridExtra)
+library(grid)
 
 # set the timezone
 Sys.setenv(TZ='UTC')
@@ -17,7 +20,7 @@ here::here()
 ### LOAD YSI DATA FOR RIVER OWENMORE ###
 
 # Load the YSI Sonde Dataset for the River Owenmore at Ballynacarrow
-OW061024_051124C<-readRDS('./01_ImportYSI_Data/Output_Files/OW061024_051124C.Rdata')     
+OW061024_051124C<-readRDS('./02_Embed_Source_Data_context/Output_Files/OW061024_051124C.rds')     
 str(OW061024_051124C)
 
 ## 3.2 Visualise the Data using ggplot2 and ggplotly
@@ -48,6 +51,7 @@ OW061024_051124C_Turbidity_Plot<-ggplot(OW061024_051124C,aes(DateTime, Turbidity
     breaks = date_breaks("2 days"))+
   theme(axis.text.x = element_text(angle = 20))
 
+OW061024_051124C_Turbidity_Plot
 
 # interactive plot using plotly
 OW061024_051124C_IntTurbidity_Plot<-ggplotly(OW061024_051124C_Turbidity_Plot)
