@@ -1,0 +1,57 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Workflow for identifying water quality hydrodynamic events
+  in time series data
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Lisa
+    family-names: Cronin
+    email: lisa.cronin@atu.ie
+    affiliation: Atlantic Technological University
+    orcid: 'https://orcid.org/0000-0001-8009-5190'
+  - given-names: Cian M.
+    family-names: Taylor
+    email: cian.taylor@atu.ie
+    affiliation: Atlantic Technological University
+    orcid: 'https://orcid.org/0000-0002-5880-8796'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.15358190
+    description: The URL of Version V1.0.0 of the software
+repository-code: >-
+  https://github.com/LCroninATU/Workflow-for-identifying-water-quality-hydrodynamic-events-in-time-series-data/tree/main
+url: 'https://citation-file-format.github.io/'
+abstract: >-
+  This project contains a concise, reproducible, open-source
+  workflow detailing the use of R, R markdown and EPA CANARY
+  event detection software and was designed for catchment
+  scientists, researchers and those working in on stream
+  hydro chemistry, diffuse pollution or any EU Water
+  Framework Directive water quality projects who require a
+  simple, detailed workflow that can be easily replicated
+  requiring minimum expertise in R. One of the primary
+  objectives of this project was to provide simple code that
+  non-coders can follow and to produce outputs at each step
+  of the workflow so the user can validate the code for
+  their data. This project includes a sample data file and a
+  detailed markdown so you can take the sample file provided
+  through each step of the workflow, prior to applying the
+  code to your own data.
+keywords:
+  - Water quality event detection
+  - water quality time series
+  - EPA CANARY
+  - Event driven pollution
+  - Hydrodynamic water quality events
+  - High frequency water quality monitoring
+  - water quality events workflow
+license: MIT
+commit: 4793afc8ffd129512ff05558d45909688c79157c
+version: 1.0.0
+date-released: '2025-05-07'
