@@ -158,3 +158,7 @@ LICENSE.md file for details
 ## Acknowledgments
 
 The authors would like to thank Jonathan Burkhardt, Ph.D.,  Office of Research & Development, U.S. EPA for providing further information on the matching of manually identified events to CANARY events which enabled the development and refinement of the code.
+
+## Citation
+Lisa Cronin and Cian Taylor (2025) “LCroninATU/Workflow-for-identifying-water-quality-hydrodynamic-events-in-time-series-data: V1.0.0”.  
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15358190.svg)](https://doi.org/10.5281/zenodo.15358190)
