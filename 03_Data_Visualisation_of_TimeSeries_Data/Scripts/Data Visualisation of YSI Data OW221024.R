@@ -1,10 +1,13 @@
-### Data Visualisation of YSI Data using ggplot2 ###
+### Data Visualisation of Data using ggplot2 ###
 
 
-# Install libraries
+# Load libraries - you may need to install them first. 
 library(ggplot2)
 library(scales)
 library(plotly)
+library(cowplot)
+library (gridExtra)
+library(grid)
 
 # set the timezone
 Sys.setenv(TZ='UTC')
@@ -14,47 +17,49 @@ here::here()
 
 ## Load the Datasets ##
 
-### Load the RAINFALL Data ### 
-
-##2.0 Import Weather Data File for Rain
-Rainfall_Data<-readr::read_csv(here::here("./02_Import_Rainfall_and_Discharge_Data/Output_Files/Rainfall_Data_061024_051124.csv"))
-str(Rainfall_Data)
-
-
-### Load the DISCHARGE DATA FOR OWENMORE AT BALLYNACARROW ###
-
-## 2.1 Import the discharge data for the River Owenmore
-OW_Discharge_Data<-readr::read_delim(here::here("./02_Import_Rainfall_and_Discharge_Data/Output_Files/OW_Discharge_061024_051124.csv"))
-OW_Discharge_Data
-
-
 ### LOAD YSI DATA FOR RIVER OWENMORE ###
 
 # Load the YSI Sonde Dataset for the River Owenmore at Ballynacarrow
-OW061024_051124C<-readRDS('./01_ImportYSI_Data/Output_Files/OW061024_051124C.Rdata')     
+OW061024_051124C<-readRDS('./02_Embed_Source_Data_context/Output_Files/OW061024_051124C.rds')     
 str(OW061024_051124C)
+
+## 3.2 Visualise the Data using ggplot2 and ggplotly
+# Data is visualised which aids in understanding the data.  There are two type of plots created:
+# 1. Static plots which appear as an image can be viewed in the Plots tab and 
+# 2. Interactive plots where can be viewed in the viewer tab. With interactive plots, you can hover over specific data points and the value will be displayed, you can zoom in on an area of a plot by click and drag with the mouse, and zoom out completely by double clicking.  Video resources are available online for ggplotly if you want to learn more. 
+ 
 
 # PLOT THE DATA
 
-# 2A Plot the Turbidity data 
-ggplot(OW061024_051124C,aes(DateTime, Turbidity))+geom_point(size=0.5)+
-  xlab("Date")+ylab("Turbidity (NTU)")+
-  scale_x_datetime(labels = date_format("%d %b %Y"))+
+# Plot the turbidity data
+ggplot(OW061024_051124C,aes(DateTime, Turbidity))+
+  geom_point(size=0.5)+
+  xlab("Date")+
+  ylab("Turbidity (NTU)")+
+  scale_x_datetime(
+    labels = date_format("%d %b %Y"),
+    breaks = date_breaks("2 days"))+
   theme(axis.text.x = element_text(angle = 20))
- 
 
-# Name the object Turbidity Plot for specific Data file
-OW061024_051124C_Turbidity_Plot<-ggplot(OW061024_051124C,aes(DateTime, Turbidity))+geom_point(size=0.5)+
-  xlab("Date")+ylab("Turbidity (NTU)")+
-  scale_x_datetime(labels = date_format("%d %b %Y"))+
+## Name the object Turbidity Plot for specific Data file
+OW061024_051124C_Turbidity_Plot<-ggplot(OW061024_051124C,aes(DateTime, Turbidity))+
+  geom_point(size=0.5)+
+  xlab("Date")+
+  ylab("Turbidity (NTU)")+
+  scale_x_datetime(
+    labels = date_format("%d %b %Y"),
+    breaks = date_breaks("2 days"))+
   theme(axis.text.x = element_text(angle = 20))
+
 OW061024_051124C_Turbidity_Plot
 
 # interactive plot using plotly
 OW061024_051124C_IntTurbidity_Plot<-ggplotly(OW061024_051124C_Turbidity_Plot)
 OW061024_051124C_IntTurbidity_Plot
-                                     
-# 3A Plot the SpCond data 
+  
+
+# Plot the Specific Conductance data                                
+# Plot the SpCond data 
 ggplot(OW061024_051124C,aes(DateTime, SpCond))+geom_point(size=0.5)+
   xlab("Date")+ylab("SpConductivity (uS/cm)")+
   scale_x_datetime(labels = date_format("%d %b %Y"))+
@@ -68,11 +73,12 @@ OW061024_051124C_SpCond_Plot<-ggplot(OW061024_051124C,aes(DateTime, SpCond))+geo
 OW061024_051124C_SpCond_Plot
 
 
-# interactive plot using plotly
+# interactive plot for specific conductance using plotly
 OW061024_051124C_IntSpCond_Plot<-ggplotly(OW061024_051124C_SpCond_Plot)
 OW061024_051124C_IntSpCond_Plot
 
-#4A Plot the Temp Data
+# Plot the Temperature Data
+# Plot the Temp Data
 OW061024_051124C_Temp_Plot<-ggplot(OW061024_051124C, aes(DateTime,Temp)) + geom_point(size=0.5)+
   xlab("Date") + ylab(bquote(Temp. ("\u00B0C")))+
   scale_x_datetime(labels = date_format("%d %b %Y"))+
@@ -92,68 +98,21 @@ OW061024_051124C_IntTemp_Plot<-ggplotly(OW061024_051124C_Temp_PlotV1)
 OW061024_051124C_IntTemp_Plot
 
 
-# Plot the Discharge Data
-max(OW_Discharge_Data$Owenmore_Ballynacarrow_Discharge) # Helps to determine the range for the y-axis
-
-ggplot(OW_Discharge_Data,aes(DateTime, Owenmore_Ballynacarrow_Discharge))+geom_point(size=0.5)+
-  xlab("Date")+ylab(bquote(Discharge (m^3/s)))+
-  scale_x_datetime(labels = date_format("%d %b %Y"))+
-  theme(axis.text.x = element_text(angle = 20))+
-  ylim(0, 40) # determines the scale range for the y-axis
-  
-# Name the object Discharge Plot for specific data file
-OW061024_051124C_Discharge_Plot<-ggplot(OW_Discharge_Data,aes(DateTime, Owenmore_Ballynacarrow_Discharge))+geom_point(size=0.5)+
-  xlab("Date")+ylab(bquote(Discharge (m^3/s)))+
-  scale_x_datetime(labels = date_format("%d %b %Y"))+
-  theme(axis.text.x = element_text(angle = 20))+
-  ylim(0, 40)
-OW061024_051124C_Discharge_Plot
-
-##Plot the Rainfall Data ##
-max(Rainfall_Data$rain) # Helps to determine the range for the y-axis
-
-ggplot(Rainfall_Data,aes(DateTime, rain))+geom_line()+
-  xlab("Date")+ylab("Rainfall (mm)")+
-  scale_x_datetime(labels = date_format("%d %b %Y"))+
-  ylim(0, 7)+
-  theme(axis.text.x = element_text(angle = 20))
-  
-# Name the object Rainfall Plot for specific data file
-OW061024_051124C_Rainfall_Plot<-ggplot(Rainfall_Data,aes(DateTime, rain))+geom_line()+
-  xlab("Date")+ylab("Rainfall (mm)")+
-  scale_x_datetime(labels = date_format("%d %b %Y"))+
-  ylim(0, 7)+
-  theme(axis.text.x = element_text(angle = 20))
-OW061024_051124C_Rainfall_Plot
-
-# Reverse plot the rainfall data - a traditional way of presenting rainfall data
-OW061024_051124C_Rainfall_Plot_Rev<-ggplot(Rainfall_Data,aes(DateTime, rain))+geom_line()+scale_y_reverse()+
-  xlab("Date")+ylab("Rainfall (mm)")
-   
-OW061024_051124C_Rainfall_Plot_Rev
-
-
-### Plot the YSI Data alongside rainfall and discharge data ###
-
+# Plot the water quality data together in one plot
+# You can zoom in on a plot using zoom in the Plots tab.
 # Arrange all plots in one column and align by x-axis
-library(cowplot)
 
-Combination_OW061024_051124C_Plot<-plot_grid(OW061024_051124C_Rainfall_Plot, OW061024_051124C_Turbidity_Plot, 
-                                     OW061024_051124C_Temp_Plot, OW061024_051124C_SpCond_Plot, OW061024_051124C_Discharge_Plot, ncol=1, align = "v")
+Comb_OW061024_051124C<-plot_grid(OW061024_051124C_Turbidity_Plot, 
+                                 OW061024_051124C_Temp_Plot, OW061024_051124C_SpCond_Plot, ncol=1, align = "v")
 
-Combination_OW061024_051124C_Plot
+Comb_OW061024_051124C
 
 
 
 # To include a title on the plot 
-library(gridExtra)
-Comb_OW061024_051124C_PlotV1<-grid.arrange(OW061024_051124C_Rainfall_Plot_Rev, OW061024_051124C_Turbidity_Plot, 
-                                 OW061024_051124C_Temp_Plot, OW061024_051124C_SpCond_Plot, OW061024_051124C_Discharge_Plot, 
-                                ncol=1, bottom=textGrob("Figure 1: River Owenmore at Ballynacarrow", gp=gpar(fontsize=14, font=3) ))
+Comb_OW061024_051124CV1<-grid.arrange(OW061024_051124C_Turbidity_Plot, 
+                                      OW061024_051124C_Temp_Plot, OW061024_051124C_SpCond_Plot, ncol=1, bottom=textGrob("Figure 1: River Owenmore at Ballynacarrow", gp=gpar(fontsize=14, font=3) ))
 
-### Save the Combined Plots ###
-# Check the wd
-here::here()
-
-library(here)
-ggsave(here("./02_Import_Rainfall_and_Discharge_Data/Output_Files", "Comb_OW061024_051124C_Plot.jpg"), Combination_OW061024_051124C_Plot)
+ 
+# Save the Combined Plots
+ggsave(here("./03_Data_Visualisation_of_TimeSeries_Data/Output_Files", "Comb_OW061024_051124C_Plot.jpg"), Comb_OW061024_051124C)

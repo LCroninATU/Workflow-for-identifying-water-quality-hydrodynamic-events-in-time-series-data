@@ -113,6 +113,11 @@ on your local machine.
 
 Then follow the steps outline [here](Using-docker-guide.md).
 
+### The Workflow
+Open the Project file, Project Workflow for detecting Hydrodynamic Water Quality Events (extension R Project) followed by the Workflow-for-Hydrodynamic-Event-Detection ( extension RMD file).  
+There is also a Workflow-for-Hydrodynamic-Event-Detection HTML file which can be a helpful read along user guide for those new to R.  It is too large to open in GitHub so must be downloaded to your web browser. 
+
+
 ## Help
 
 [More information on reusing other people's code in your
